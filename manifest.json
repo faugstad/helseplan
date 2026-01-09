@@ -2,7 +2,7 @@
   "name": "Helseplan 2025",
   "short_name": "Helseplan",
   "description": "Din personlige helseplan - kosttilskudd, mobilitet og vaner",
-  "start_url": "/",
+  "start_url": "/helseplan/",
   "display": "standalone",
   "background_color": "#0d1210",
   "theme_color": "#1a1f1a",

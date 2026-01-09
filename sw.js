@@ -1,9 +1,9 @@
-const CACHE_NAME = 'helseplan-v1';
+const CACHE_NAME = 'helseplan-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/icon.svg',
-  '/manifest.json'
+  '/helseplan/',
+  '/helseplan/index.html',
+  '/helseplan/icon.svg',
+  '/helseplan/manifest.json'
 ];
 
 // Install event
