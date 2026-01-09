@@ -1,0 +1,13 @@
+# Claude Code settings (local only)
+.claude/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editor directories
+.vscode/
+.idea/
