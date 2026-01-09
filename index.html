@@ -522,26 +522,44 @@
       // Track if there are unsaved changes
       const hasPendingChanges = React.useRef(false);
       const latestData = React.useRef(allData);
-      
-      // Keep latestData ref updated
+      const latestSupplements = React.useRef(allSupplements);
+      const latestSuppConfig = React.useRef(suppConfig);
+
+      // Keep refs updated
       useEffect(() => {
         latestData.current = allData;
       }, [allData]);
+
+      useEffect(() => {
+        latestSupplements.current = allSupplements;
+      }, [allSupplements]);
+
+      useEffect(() => {
+        latestSuppConfig.current = suppConfig;
+      }, [suppConfig]);
       
-      // Debounced auto-sync: 30 seconds after last change
+      // Debounced auto-sync: 5 seconds after last change
       useEffect(() => {
         if (isInitialMount.current) {
           isInitialMount.current = false;
           return;
         }
-        
+
         hasPendingChanges.current = true;
         setCloudStatus('pending');
-        
+
         const timer = setTimeout(async () => {
           const binId = getBinId();
           setCloudStatus('syncing');
-          
+
+          // Include supplement data in auto-sync
+          const backupData = {
+            ...allData,
+            suppList: allSupplements,
+            suppConfig: suppConfig,
+            lastBackup: new Date().toISOString()
+          };
+
           try {
             if (binId) {
               const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
@@ -550,7 +568,7 @@
                   'Content-Type': 'application/json',
                   'X-Master-Key': JSONBIN_API_KEY
                 },
-                body: JSON.stringify({ ...allData, lastBackup: new Date().toISOString() })
+                body: JSON.stringify(backupData)
               });
               if (!res.ok) throw new Error('Auto-sync failed');
             } else {
@@ -561,7 +579,7 @@
                   'X-Master-Key': JSONBIN_API_KEY,
                   'X-Bin-Name': 'helseplan-backup'
                 },
-                body: JSON.stringify({ ...allData, lastBackup: new Date().toISOString() })
+                body: JSON.stringify(backupData)
               });
               if (!res.ok) throw new Error('Auto-sync failed');
               const data = await res.json();
@@ -575,21 +593,23 @@
             setCloudStatus('error');
             setTimeout(() => setCloudStatus(''), 5000);
           }
-        }, 30000); // 30 seconds
-        
+        }, 5000); // 5 seconds
+
         return () => clearTimeout(timer);
-      }, [allData]);
+      }, [allData, allSupplements, suppConfig]);
       
       // Sync immediately when leaving page (switching apps, going to home screen)
       useEffect(() => {
         const syncOnHide = () => {
           if (document.visibilityState === 'hidden' && hasPendingChanges.current) {
             const binId = getBinId();
-            const dataToSync = JSON.stringify({ 
-              ...latestData.current, 
-              lastBackup: new Date().toISOString() 
+            const dataToSync = JSON.stringify({
+              ...latestData.current,
+              suppList: latestSupplements.current,
+              suppConfig: latestSuppConfig.current,
+              lastBackup: new Date().toISOString()
             });
-            
+
             if (binId) {
               // Use fetch with keepalive to ensure request completes
               fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
@@ -604,7 +624,7 @@
             }
             // Note: Can't create new bin on hide (need to read response for ID)
             // But once a bin exists, syncs will work
-            
+
             hasPendingChanges.current = false;
           }
         };
