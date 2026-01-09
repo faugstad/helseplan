@@ -8,7 +8,7 @@ Din personlige helseplan - spor kosttilskudd, mobilitet og vaner.
 
 - 💊 **Daglig tilskudd-tracking** - Morgen, lunsj og kveld
 - 🧘 **Mobilitetsrutine** - 6 øvelser med lenker til guider
-- 🍺 **Alkoholfri søndag** - Én enkel vane
+- 🍺 **Alkoholfri uke** - Én enkel vane
 - ⏱️ **Bevegelsespause-timer** - 45 min påminnelse
 - 📱 **PWA-støtte** - Installer som app på mobilen
 - 💾 **Lokal lagring** - Alt lagres i nettleseren
