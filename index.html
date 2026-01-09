@@ -412,7 +412,15 @@
         setSyncStatus('Lagrer...');
         try {
           const binId = getBinId();
-          
+
+          // Include supplement data in backup
+          const backupData = {
+            ...allData,
+            suppList: allSupplements,
+            suppConfig: suppConfig,
+            lastBackup: new Date().toISOString()
+          };
+
           if (binId) {
             // Update existing bin
             const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
@@ -421,7 +429,7 @@
                 'Content-Type': 'application/json',
                 'X-Master-Key': JSONBIN_API_KEY
               },
-              body: JSON.stringify({ ...allData, lastBackup: new Date().toISOString() })
+              body: JSON.stringify(backupData)
             });
             if (!res.ok) throw new Error('Backup failed');
           } else {
@@ -433,13 +441,13 @@
                 'X-Master-Key': JSONBIN_API_KEY,
                 'X-Bin-Name': 'helseplan-backup'
               },
-              body: JSON.stringify({ ...allData, lastBackup: new Date().toISOString() })
+              body: JSON.stringify(backupData)
             });
             if (!res.ok) throw new Error('Backup failed');
             const data = await res.json();
             setBinId(data.metadata.id);
           }
-          
+
           setSyncStatus('✓ Lagret!');
           setTimeout(() => setSyncStatus(''), 3000);
         } catch (e) {
@@ -457,21 +465,35 @@
           setTimeout(() => setSyncStatus(''), 3000);
           return;
         }
-        
+
         setSyncStatus('Henter...');
         try {
           const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
             headers: { 'X-Master-Key': JSONBIN_API_KEY }
           });
           if (!res.ok) throw new Error('Restore failed');
-          
+
           const json = await res.json();
           const restored = json.record;
           delete restored.lastBackup;
-          
+
+          // Restore supplement data if present
+          if (restored.suppList) {
+            setAllSupplements(restored.suppList);
+            localStorage.setItem('helseplan_supp_list', JSON.stringify(restored.suppList));
+            delete restored.suppList;
+          }
+
+          if (restored.suppConfig) {
+            setSuppConfig(restored.suppConfig);
+            localStorage.setItem('helseplan_supp_config', JSON.stringify(restored.suppConfig));
+            delete restored.suppConfig;
+          }
+
+          // Restore main health data
           setAllData(restored);
           localStorage.setItem('healthDashboardHistory', JSON.stringify(restored));
-          
+
           setSyncStatus('✓ Hentet!');
           setShowSyncModal(false);
           setTimeout(() => setSyncStatus(''), 3000);
