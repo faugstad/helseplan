@@ -5,8 +5,8 @@
   "start_url": "/helseplan/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#0d1210",
-  "theme_color": "#0d1210",
+  "background_color": "#141c14",
+  "theme_color": "#141c14",
   "orientation": "portrait",
   "icons": [
     {
