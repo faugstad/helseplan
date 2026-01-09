@@ -1,4 +1,4 @@
-const CACHE_NAME = 'helseplan-v2';
+const CACHE_NAME = 'helseplan-v3';
 const urlsToCache = [
   '/helseplan/',
   '/helseplan/index.html',
