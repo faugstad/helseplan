@@ -7,10 +7,12 @@
 			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
 		/>
 		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		<meta name="apple-mobile-web-app-title" content="Helseplan" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="theme-color" content="#0d1210" />
+		<meta name="theme-color" content="#0d1210" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#0d1210" media="(prefers-color-scheme: light)" />
 		<meta
 			name="description"
 			content="Din personlige helseplan - kosttilskudd, trening og vaner"
@@ -73,6 +75,7 @@
 			#root {
 				min-height: 100vh;
 				min-height: -webkit-fill-available;
+				padding-top: env(safe-area-inset-top);
 				padding-bottom: calc(70px + env(safe-area-inset-bottom));
 			}
 
