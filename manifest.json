@@ -4,9 +4,8 @@
   "description": "Din personlige helseplan - kosttilskudd, mobilitet og vaner",
   "start_url": "/helseplan/",
   "display": "standalone",
-  "display_override": ["fullscreen", "standalone"],
   "background_color": "#0d1210",
-  "theme_color": "#0d1210",
+  "theme_color": "#3d5a30",
   "orientation": "portrait",
   "icons": [
     {
