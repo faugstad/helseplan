@@ -60,6 +60,7 @@
 				padding: 0;
 				min-height: 100vh;
 				min-height: -webkit-fill-available;
+			background-color: #141c14; /* Solid fallback matching theme-color */
 				background: linear-gradient(
 					145deg,
 					#1a1f1a 0%,
@@ -71,6 +72,20 @@
 				color: #e8ebe8;
 				overscroll-behavior: none;
 			}
+
+		/* Ensure background extends to safe areas on Android */
+		html::after,
+		body::after {
+			content: '';
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: env(safe-area-inset-bottom);
+			background-color: #141c14;
+			z-index: -1;
+			pointer-events: none;
+		}
 
 			#root {
 				min-height: 100vh;
