@@ -526,6 +526,7 @@
 							...allData,
 							suppList: allSupplements,
 							suppConfig: suppConfig,
+							suppOrder: suppOrder,
 							lastBackup: new Date().toISOString(),
 						};
 
@@ -605,6 +606,15 @@
 								JSON.stringify(restored.suppConfig)
 							);
 							delete restored.suppConfig;
+						}
+
+						if (restored.suppOrder) {
+							setSuppOrder(restored.suppOrder);
+							localStorage.setItem(
+								'helseplan_supp_order',
+								JSON.stringify(restored.suppOrder)
+							);
+							delete restored.suppOrder;
 						}
 
 						// Restore main health data
@@ -932,8 +942,22 @@
 					}
 				};
 
+				const getSuppOrder = () => {
+					try {
+						const saved = localStorage.getItem('helseplan_supp_order');
+						if (saved) {
+							return JSON.parse(saved);
+						}
+						// Default order is the default supplements list order
+						return defaultSupplementsList.map(s => s.key);
+					} catch {
+						return defaultSupplementsList.map(s => s.key);
+					}
+				};
+
 				const [allSupplements, setAllSupplements] = useState(getSuppList);
 				const [suppConfig, setSuppConfig] = useState(getSuppConfig);
+				const [suppOrder, setSuppOrder] = useState(getSuppOrder);
 				const [showSuppEditor, setShowSuppEditor] = useState(false);
 				const [showAddSupp, setShowAddSupp] = useState(false);
 				const [newSuppName, setNewSuppName] = useState('');
@@ -998,6 +1022,15 @@
 						return updated;
 					});
 
+					setSuppOrder((prev) => {
+						const updated = [...prev, key];
+						localStorage.setItem(
+							'helseplan_supp_order',
+							JSON.stringify(updated)
+						);
+						return updated;
+					});
+
 					setNewSuppName('');
 					setNewSuppIcon('💊');
 					setNewSuppPeriod('morning');
@@ -1023,16 +1056,65 @@
 						);
 						return updated;
 					});
+
+					setSuppOrder((prev) => {
+						const updated = prev.filter((k) => k !== key);
+						localStorage.setItem(
+							'helseplan_supp_order',
+							JSON.stringify(updated)
+						);
+						return updated;
+					});
 				};
 
-				// Dynamic supplement arrays based on config
-				const morningSupps = allSupplements
+				const moveSupplement = (key, direction) => {
+					setSuppOrder((prev) => {
+						const currentIndex = prev.indexOf(key);
+						if (currentIndex === -1) return prev;
+
+						const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+						// Check bounds
+						if (newIndex < 0 || newIndex >= prev.length) return prev;
+
+						const updated = [...prev];
+						// Swap elements
+						[updated[currentIndex], updated[newIndex]] = [updated[newIndex], updated[currentIndex]];
+
+						localStorage.setItem(
+							'helseplan_supp_order',
+							JSON.stringify(updated)
+						);
+						return updated;
+					});
+				};
+
+				// Get ordered supplements list
+				const getOrderedSupplements = () => {
+					// Create a map for quick lookup
+					const suppMap = new Map(allSupplements.map(s => [s.key, s]));
+
+					// Filter suppOrder to only include existing supplements
+					const validOrder = suppOrder.filter(key => suppMap.has(key));
+
+					// Add any new supplements that aren't in the order yet
+					const missingSupps = allSupplements.filter(s => !validOrder.includes(s.key));
+					const completeOrder = [...validOrder, ...missingSupps.map(s => s.key)];
+
+					// Map to supplement objects
+					return completeOrder.map(key => suppMap.get(key)).filter(Boolean);
+				};
+
+				const orderedSupplements = getOrderedSupplements();
+
+				// Dynamic supplement arrays based on config (using ordered list)
+				const morningSupps = orderedSupplements
 					.filter((s) => suppConfig[s.key] === 'morning')
 					.map((s) => s.key);
-				const lunchSupps = allSupplements
+				const lunchSupps = orderedSupplements
 					.filter((s) => suppConfig[s.key] === 'lunch')
 					.map((s) => s.key);
-				const eveningSupps = allSupplements
+				const eveningSupps = orderedSupplements
 					.filter((s) => suppConfig[s.key] === 'evening')
 					.map((s) => s.key);
 
@@ -4073,7 +4155,7 @@
 															marginBottom: '16px',
 														}}
 													>
-														Velg når hvert tilskudd skal tas. Trykk 🗑️ for å
+														Velg når hvert tilskudd skal tas. Bruk ↑↓ for å endre rekkefølge. Trykk 🗑️ for å
 														fjerne.
 													</p>
 
@@ -4086,7 +4168,7 @@
 															paddingRight: '4px',
 														}}
 													>
-														{allSupplements.map((supp) => (
+														{orderedSupplements.map((supp, index) => (
 															<div
 																key={supp.key}
 																style={{
@@ -4117,29 +4199,71 @@
 																	>
 																		{supp.name}
 																	</span>
-																	<button
-																		onClick={() => {
-																			if (confirm(`Fjerne ${supp.name}?`)) {
-																				removeSupplement(supp.key);
-																			}
-																		}}
-																		style={{
-																			width: '28px',
-																			height: '28px',
-																			borderRadius: '6px',
-																			border:
-																				'1px solid rgba(180, 100, 100, 0.3)',
-																			background: 'rgba(120, 60, 60, 0.2)',
-																			color: '#c8a8a8',
-																			fontSize: '12px',
-																			cursor: 'pointer',
-																			display: 'flex',
-																			alignItems: 'center',
-																			justifyContent: 'center',
-																		}}
-																	>
-																		🗑️
-																	</button>
+																	<div style={{ display: 'flex', gap: '6px' }}>
+																		<button
+																			onClick={() => moveSupplement(supp.key, 'up')}
+																			disabled={index === 0}
+																			style={{
+																				width: '28px',
+																				height: '28px',
+																				borderRadius: '6px',
+																				border:
+																					'1px solid rgba(100, 120, 90, 0.3)',
+																				background: index === 0 ? 'rgba(60, 60, 60, 0.2)' : 'rgba(80, 100, 80, 0.2)',
+																				color: index === 0 ? '#6a7a6a' : '#a8c898',
+																				fontSize: '14px',
+																				cursor: index === 0 ? 'not-allowed' : 'pointer',
+																				display: 'flex',
+																				alignItems: 'center',
+																				justifyContent: 'center',
+																			}}
+																		>
+																			↑
+																		</button>
+																		<button
+																			onClick={() => moveSupplement(supp.key, 'down')}
+																			disabled={index === orderedSupplements.length - 1}
+																			style={{
+																				width: '28px',
+																				height: '28px',
+																				borderRadius: '6px',
+																				border:
+																					'1px solid rgba(100, 120, 90, 0.3)',
+																				background: index === orderedSupplements.length - 1 ? 'rgba(60, 60, 60, 0.2)' : 'rgba(80, 100, 80, 0.2)',
+																				color: index === orderedSupplements.length - 1 ? '#6a7a6a' : '#a8c898',
+																				fontSize: '14px',
+																				cursor: index === orderedSupplements.length - 1 ? 'not-allowed' : 'pointer',
+																				display: 'flex',
+																				alignItems: 'center',
+																				justifyContent: 'center',
+																			}}
+																		>
+																			↓
+																		</button>
+																		<button
+																			onClick={() => {
+																				if (confirm(`Fjerne ${supp.name}?`)) {
+																					removeSupplement(supp.key);
+																				}
+																			}}
+																			style={{
+																				width: '28px',
+																				height: '28px',
+																				borderRadius: '6px',
+																				border:
+																					'1px solid rgba(180, 100, 100, 0.3)',
+																				background: 'rgba(120, 60, 60, 0.2)',
+																				color: '#c8a8a8',
+																				fontSize: '12px',
+																				cursor: 'pointer',
+																				display: 'flex',
+																				alignItems: 'center',
+																				justifyContent: 'center',
+																			}}
+																		>
+																			🗑️
+																		</button>
+																	</div>
 																</div>
 																<div style={{ display: 'flex', gap: '8px' }}>
 																	{[
